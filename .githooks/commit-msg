@@ -1,0 +1,24 @@
+#!/bin/sh
+# Control de autoría: el único autor permitido es Jairo Castillo.
+# Rechaza el commit si el autor o el committer no es el autorizado,
+# o si el mensaje incluye trailers de coautoría o firmas de terceros.
+
+AUTOR_PERMITIDO="jairocastillo.code@gmail.com"
+
+correo() { git var "$1" | sed -n 's/.*<\(.*\)>.*/\1/p'; }
+
+for ident in GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT; do
+  actual=$(correo "$ident")
+  if [ "$actual" != "$AUTOR_PERMITIDO" ]; then
+    echo "ERROR: $ident es <$actual>; solo se permite <$AUTOR_PERMITIDO>." >&2
+    exit 1
+  fi
+done
+
+if grep -v '^#' "$1" | grep -qiE '^[[:space:]]*[a-z-]*-by[[:space:]]*:|generated with|noreply@'; then
+  echo "ERROR: el mensaje contiene una línea de coautoría o atribución:" >&2
+  grep -v '^#' "$1" | grep -iE '^[[:space:]]*[a-z-]*-by[[:space:]]*:|generated with|noreply@' >&2
+  exit 1
+fi
+
+exit 0

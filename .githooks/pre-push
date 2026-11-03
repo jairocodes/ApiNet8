@@ -1,0 +1,27 @@
+#!/bin/sh
+# Control de autoría antes de publicar: revisa cada commit que se va a enviar.
+# Atrapa commits hechos con --no-verify o reescritos por otras herramientas.
+
+AUTOR_PERMITIDO="jairocastillo.code@gmail.com"
+CERO="0000000000000000000000000000000000000000"
+fallo=0
+
+while read -r ref_local sha_local ref_remota sha_remota; do
+  [ "$sha_local" = "$CERO" ] && continue
+  if [ "$sha_remota" = "$CERO" ]; then rango="$sha_local"; else rango="$sha_remota..$sha_local"; fi
+
+  for c in $(git rev-list "$rango"); do
+    autor=$(git log -1 --format=%ae "$c")
+    committer=$(git log -1 --format=%ce "$c")
+    if [ "$autor" != "$AUTOR_PERMITIDO" ] || [ "$committer" != "$AUTOR_PERMITIDO" ]; then
+      echo "ERROR: el commit $c tiene autor <$autor> / committer <$committer>." >&2
+      fallo=1
+    fi
+    if git log -1 --format=%B "$c" | grep -qiE '^[[:space:]]*[a-z-]*-by[[:space:]]*:|generated with|noreply@'; then
+      echo "ERROR: el commit $c contiene una línea de coautoría o atribución." >&2
+      fallo=1
+    fi
+  done
+done
+
+exit $fallo

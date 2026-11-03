@@ -1,0 +1,15 @@
+{
+  "dotnet.defaultSolution": "Proyectos.sln",
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  },
+  "[csharp]": {
+    "editor.formatOnSave": true
+  },
+  "rest-client.environmentVariables": {
+    "$shared": {
+      "api": "http://localhost:5025"
+    }
+  }
+}
